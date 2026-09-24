@@ -75,6 +75,7 @@ public class Game extends JFrame {
                 ((Timer) e.getSource()).stop();
                 return;
             }
+            panel.repaint();
             newPanel.repaint();
         });
 

@@ -51,6 +51,12 @@ public class InputHandler implements KeyListener {
                 break;
         }
         panel.repaint();
+
+        //操作毎に現在の座標を表示
+        for (int i = 0; i < player.pos.coords.length; i++) {
+            System.out.print(player.pos.coords[i] + " ");
+        }
+        System.out.println();
     }
 
     @Override

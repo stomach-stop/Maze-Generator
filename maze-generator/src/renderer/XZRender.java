@@ -1,6 +1,6 @@
 package renderer;
 
-import java.awt.FontMetrics;
+//import java.awt.FontMetrics;
 import java.awt.Graphics;
 import game.*;
 
@@ -57,6 +57,7 @@ public class XZRender implements MazeRender {
             g.drawLine(x, y, x + cellSize, y);
         }
 
+        /*
         FontMetrics fm = g.getFontMetrics();
 
         int textX = x + (cellSize - fm.stringWidth("↑")) / 2 + 1;
@@ -69,6 +70,7 @@ public class XZRender implements MazeRender {
         if (!cell.hasWall(Direction.NegativeX)) {
             g.drawString("↓", textX, textY);
         }
+        */
     }
 
     @Override

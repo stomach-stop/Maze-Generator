@@ -1,36 +1,29 @@
 package game;
 
-public class Position { //座標を管理
-    public int[] coords; //座標の値を格納する配列
-    public Position(int... values) {
-        this.coords = values.clone();
-    }
+import java.util.Arrays;
 
-    public Position cloneMoved(Direction dir) {
-        int[] clone = this.coords.clone();
-        for (int i = 0; i < coords.length; i++) {
-            clone[i] += dir.get()[i];
-        }
-        return new Position(clone);
-    }
+/** 生成後に値が変わらない座標。配列を外部と共有しない。 */
+public final class Position {
+    private final int[] coordinates;
 
-    //以下AI生成
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
+    public Position(int... values) { coordinates = values.clone(); }
+    public int dimensions() { return coordinates.length; }
+    public int coordinate(int axis) { return coordinates[axis]; }
+    public int[] toArray() { return coordinates.clone(); }
 
-        if (!(obj instanceof Position)) {
-            return false;
-        }
-        
-        Position other = (Position) obj; //型キャスト
-        return java.util.Arrays.equals(coords, other.coords);
+    public Position cloneMoved(Direction direction) {
+        int[] moved = coordinates.clone();
+        int[] delta = direction.get();
+        for (int axis = 0; axis < moved.length; axis++) moved[axis] += delta[axis];
+        return new Position(moved);
     }
 
     @Override
-    public int hashCode() {
-        return java.util.Arrays.hashCode(coords);
+    public boolean equals(Object other) {
+        return this == other || other instanceof Position
+                && Arrays.equals(coordinates, ((Position) other).coordinates);
     }
+
+    @Override
+    public int hashCode() { return Arrays.hashCode(coordinates); }
 }

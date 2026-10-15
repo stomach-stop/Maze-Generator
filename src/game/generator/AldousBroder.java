@@ -4,27 +4,32 @@ import java.util.*;
 import game.*;
 
 public class AldousBroder implements Generator {
-    private Maze maze;
-    private Random random = new Random();
+    private final Maze maze;
+    private final Random random;
 
     public AldousBroder(Maze maze) {
-        this.maze = maze;
-        System.out.println("AldousBroder");
+        this(maze, new Random());
+    }
+
+    public AldousBroder(Maze maze, Random random) {
+        this.maze = java.util.Objects.requireNonNull(maze);
+        this.random = java.util.Objects.requireNonNull(random);
     }
 
     @Override
     public void generate(Position pos) {
-        Position current = new Position(pos.coords);
+        maze.beginGeneration(pos);
+        Position current = pos;
 
         int visitedCount = 1;
 
         // 開始地点を訪問済みにする
-        maze.cells[maze.toIndex(current)].visit();
+        maze.cellAt(current).visit();
 
-        while (visitedCount < maze.cells.length) {
+        while (visitedCount < maze.cellCount()) {
             // ランダムな方向
             Direction dir =
-                Direction.values()[random.nextInt(Direction.values().length)];
+                maze.getDirection(random.nextInt(maze.getDirectionCount()));
 
             Position next = current.cloneMoved(dir);
 
@@ -33,15 +38,11 @@ public class AldousBroder implements Generator {
                 continue;
             }
 
-            int currentIndex = maze.toIndex(current);
-            int nextIndex = maze.toIndex(next);
-
             // 未訪問なら壁を壊す
             if (maze.canVisit(next)) {
-                maze.cells[currentIndex].removeWall(dir);
-                maze.cells[nextIndex].removeWall(dir.opposite());
+                maze.openPassage(current, dir);
 
-                maze.cells[nextIndex].visit();
+                maze.cellAt(next).visit();
 
                 visitedCount++;
             }

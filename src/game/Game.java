@@ -1,164 +1,96 @@
 package game;
 
-import javax.swing.JFrame;
+import game.generator.AldousBroder;
+import game.generator.Generator;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
-import game.generator.*;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.SwingWorker;
 
-public class Game extends JFrame {
-    private Generator generator;
-    private GamePanel panel;
-    private InputHandler handler;
+/** アプリの起動、非同期生成、共有モデルとウィンドウの寿命を管理する。 */
+public final class Game extends JFrame {
+    private static final long serialVersionUID = 1L;
+    private final List<GamePanel> panels = new ArrayList<>();
     private Maze maze;
     private Player player;
-    private List<GamePanel> panels = new ArrayList<>();
-    
-    public Game() {
-        setTitle("Maze Generator");
-        setSize(
-            GameSetting.WINDOW_WIDTH,
-            GameSetting.WINDOW_HEIGHT
-        );
 
-        maze = new Maze(GameSetting.MAZE_SIZE);
+    public Game() { this(AldousBroder::new); }
 
-        //generator = new RecursiveBacktracker(maze);
-        //generator = new Kruskal(maze);
-        //generator = new Prim(maze);
-        generator = new AldousBroder(maze);
-        //generator = new Wilson(maze);
-
-        generator.generate(
-            new Position(GameSetting.START_POSITION)
-        );
-
-        player = new Player(maze);
-        panel = new GamePanel(maze, player);
-        panels.add(panel);
-        handler = new InputHandler(panel, player, this);
-
-        panel.addKeyListener(handler);
-        panel.setFocusable(true);
-
-        add(panel);
-
+    /** アルゴリズムや乱数シードの選択を外部から渡せる入口。 */
+    public Game(Function<Maze, Generator> generatorFactory) {
+        super("Maze Generator");
+        int[] sizes = GameSetting.MAZE_SIZE.clone();
+        Position start = new Position(GameSetting.START_POSITION);
+        JLabel status = new JLabel("迷路を生成中...", JLabel.CENTER);
+        status.setPreferredSize(GameSetting.preferredViewSize());
+        add(status, BorderLayout.CENTER);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        pack();
+        setMinimumSize(new Dimension(360, 320));
         setLocationRelativeTo(null);
         setVisible(true);
 
+        new SwingWorker<Maze, Void>() {
+            @Override
+            protected Maze doInBackground() {
+                if (sizes.length != 3) throw new IllegalArgumentException("The viewer requires a 3D maze.");
+                Maze generated = new Maze(sizes);
+                generatorFactory.apply(generated).generate(start);
+                return generated;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    maze = get();
+                    player = new Player(maze, start);
+                    GamePanel panel = createPanel();
+                    setContentPane(panel);
+                    revalidate();
+                    repaint();
+                    panel.requestFocusInWindow();
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    status.setText("迷路の生成が中断されました。");
+                } catch (ExecutionException exception) {
+                    status.setText("迷路を生成できませんでした: " + exception.getCause().getMessage());
+                }
+            }
+        }.execute();
+    }
+
+    private GamePanel createPanel() {
+        GamePanel panel = new GamePanel(maze, player);
+        new InputHandler(player, panel::setView, panel::activeCamera,
+                this::openWindow, this::repaintAllPanels).install(panel);
+        panels.add(panel);
+        return panel;
+    }
+
+    public void openWindow() {
+        if (maze == null || player == null) return;
+        GamePanel panel = createPanel();
+        JFrame frame = new JFrame("Maze");
+        frame.setContentPane(panel);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.pack();
+        frame.setMinimumSize(new Dimension(360, 320));
+        frame.setLocationByPlatform(true);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override public void windowClosed(WindowEvent event) { panels.remove(panel); }
+        });
+        frame.setVisible(true);
         panel.requestFocusInWindow();
     }
 
-    //以下AI
-    public void openWindow() {
-
-        JFrame frame =
-            new JFrame("Maze");
-
-
-        GamePanel newPanel =
-            new GamePanel(
-                maze,
-                player
-            );
-
-        /*
-         * 全画面リストへ登録
-         */
-        panels.add(newPanel);
-
-
-        InputHandler newHandler =
-            new InputHandler(
-                newPanel,
-                player,
-                this
-            );
-
-
-        newPanel.addKeyListener(
-            newHandler
-        );
-
-        newPanel.setFocusable(
-            true
-        );
-
-
-        frame.add(
-            newPanel
-        );
-
-
-        frame.setSize(
-            GameSetting.WINDOW_WIDTH,
-            GameSetting.WINDOW_HEIGHT
-        );
-
-
-        frame.setDefaultCloseOperation(
-            JFrame.DISPOSE_ON_CLOSE
-        );
-
-        frame.setLocationByPlatform(
-            true
-        );
-
-        setVisibleWindow(
-            frame,
-            newPanel
-        );
-    }
-
-
-    /*
-     * ウィンドウ表示処理
-     */
-    private void setVisibleWindow(
-            JFrame frame,
-            GamePanel newPanel) {
-
-        frame.setVisible(
-            true
-        );
-
-        newPanel.requestFocusInWindow();
-
-
-        /*
-         * ウィンドウが閉じられたら
-         * panelsから削除
-         */
-        frame.addWindowListener(
-            new java.awt.event.WindowAdapter() {
-
-                @Override
-                public void windowClosed(
-                        java.awt.event.WindowEvent e) {
-
-                    panels.remove(
-                        newPanel
-                    );
-                }
-            }
-        );
-    }
-
-
-    /*
-     * =========================
-     * 全画面再描画
-     * =========================
-     */
-
-    public void repaintAllPanels() {
-
-        for (
-            GamePanel gamePanel
-                : panels
-        ) {
-
-            gamePanel.repaint();
-        }
+    private void repaintAllPanels() {
+        for (GamePanel panel : panels) panel.repaint();
     }
 }

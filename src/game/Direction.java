@@ -10,14 +10,14 @@ public enum Direction {
     PositiveW(0, 0, 0, 1),
     NegativeW(0, 0, 0, -1);
 
-    private int[] delta;
+    private final int[] delta;
 
     Direction(int... delta) {
         this.delta = delta;
     }
 
     public int[] get() {
-        return delta;
+        return delta.clone();
     }
 
     public Direction opposite() {

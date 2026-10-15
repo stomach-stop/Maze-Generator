@@ -4,17 +4,23 @@ import java.util.*;
 import game.*;
 
 public class Prim implements Generator {
-    private Maze maze;
+    private final Maze maze;
+    private final Random random;
 
     public Prim(Maze maze) {
-        this.maze = maze;
-        System.out.println("Prim");
+        this(maze, new Random());
+    }
+
+    public Prim(Maze maze, Random random) {
+        this.maze = java.util.Objects.requireNonNull(maze);
+        this.random = java.util.Objects.requireNonNull(random);
     }
 
     @Override
     public void generate(Position pos) {
+        maze.beginGeneration(pos);
         // 現在地を訪問済みにする
-        maze.cells[maze.toIndex(pos)].visit();
+        maze.cellAt(pos).visit();
 
         // 壁の候補を入れるリスト
         List<Wall> walls = new ArrayList<>();
@@ -24,7 +30,7 @@ public class Prim implements Generator {
 
         while (!walls.isEmpty()) {
             // ランダムに壁を1つ選ぶ
-            int index = new Random().nextInt(walls.size());
+            int index = random.nextInt(walls.size());
             Wall wall = walls.remove(index);
 
             Position next = wall.pos.cloneMoved(wall.dir);
@@ -33,15 +39,11 @@ public class Prim implements Generator {
             if (maze.isInBounds(next)
                     && maze.canVisit(next)) {
 
-                int currentIndex = maze.toIndex(wall.pos);
-                int nextIndex = maze.toIndex(next);
-
                 // 壁を削除
-                maze.cells[currentIndex].removeWall(wall.dir);
-                maze.cells[nextIndex].removeWall(wall.dir.opposite());
+                maze.openPassage(wall.pos, wall.dir);
 
                 // 次のセルを訪問済みにする
-                maze.cells[nextIndex].visit();
+                maze.cellAt(next).visit();
 
                 // 新しく追加されたセルから伸ばせる壁を追加
                 addWalls(next, walls);
@@ -51,7 +53,7 @@ public class Prim implements Generator {
 
     // 指定したセルから伸ばせる壁を追加
     private void addWalls(Position pos, List<Wall> walls) {
-        for (Direction dir : Direction.values()) {
+        for (Direction dir : maze.getDirections()) {
             Position next = pos.cloneMoved(dir);
 
             if (maze.isInBounds(next)

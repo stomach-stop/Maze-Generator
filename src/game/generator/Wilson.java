@@ -4,35 +4,40 @@ import java.util.*;
 import game.*;
 
 public class Wilson implements Generator {
-    private Maze maze;
-    private Random random = new Random();
+    private final Maze maze;
+    private final Random random;
 
     public Wilson(Maze maze) {
-        this.maze = maze;
-        System.out.println("Wilson");
+        this(maze, new Random());
+    }
+
+    public Wilson(Maze maze, Random random) {
+        this.maze = java.util.Objects.requireNonNull(maze);
+        this.random = java.util.Objects.requireNonNull(random);
     }
 
     @Override
     public void generate(Position pos) {
+        maze.beginGeneration(pos);
         // 最初のセルを訪問済みにする
         int startIndex = maze.toIndex(pos);
-        maze.cells[startIndex].visit();
+        maze.cellAt(startIndex).visit();
 
         int visitedCount = 1;
 
-        while (visitedCount < maze.cells.length) {
+        while (visitedCount < maze.cellCount()) {
 
             // 未訪問セルをランダムに選ぶ
             Position current = randomUnvisitedPosition();
 
             List<Position> path = new ArrayList<>();
-            path.add(new Position(current.coords));
+            path.add(current);
 
             // ランダムウォーク
             while (!isVisited(current)) {
 
                 Direction dir =
-                    Direction.values()[random.nextInt(Direction.values().length)];
+                    maze.getDirection(random.nextInt(maze.getDirectionCount()));
 
                 Position next = current.cloneMoved(dir);
 
@@ -50,7 +55,7 @@ public class Wilson implements Generator {
 
                 // ループを削除、または経路に追加
                 if (!eraseLoop(path, current)) {
-                    path.add(new Position(current.coords));
+                    path.add(current);
                 }
             }
 
@@ -68,16 +73,12 @@ public class Wilson implements Generator {
 
                 Direction dir = getDirection(cell, next);
 
-                int cellIndex = maze.toIndex(cell);
-                int nextIndex = maze.toIndex(next);
-
                 // 壁を壊す
-                maze.cells[cellIndex].removeWall(dir);
-                maze.cells[nextIndex].removeWall(dir.opposite());
+                maze.openPassage(cell, dir);
 
                 // 訪問済みにする
                 if (!isVisited(cell)) {
-                    maze.cells[cellIndex].visit();
+                    maze.cellAt(cell).visit();
                     visitedCount++;
                 }
             }
@@ -87,9 +88,9 @@ public class Wilson implements Generator {
     // 未訪問セルをランダムに取得
     private Position randomUnvisitedPosition() {
         while (true) {
-            int index = random.nextInt(maze.cells.length);
+            int index = random.nextInt(maze.cellCount());
 
-            Position pos = indexToPosition(index);
+            Position pos = maze.positionAt(index);
 
             if (!isVisited(pos)) {
                 return pos;
@@ -116,7 +117,7 @@ public class Wilson implements Generator {
 
     // 2つのPositionから方向を取得
     private Direction getDirection(Position from, Position to) {
-        for (Direction dir : Direction.values()) {
+        for (Direction dir : maze.getDirections()) {
             Position next = from.cloneMoved(dir);
 
             if (next.equals(to)) {
@@ -124,18 +125,7 @@ public class Wilson implements Generator {
             }
         }
 
-        return null;
+        throw new IllegalStateException("Path contains non-adjacent cells.");
     }
 
-    // indexからPositionを作成
-    private Position indexToPosition(int index) {
-        int[] coords = new int[maze.mazeSize.length];
-
-        for (int i = maze.mazeSize.length - 1; i >= 0; i--) {
-            coords[i] = index % maze.mazeSize[i];
-            index /= maze.mazeSize[i];
-        }
-
-        return new Position(coords);
-    }
 }

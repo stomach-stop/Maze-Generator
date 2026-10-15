@@ -1,23 +1,20 @@
 package game;
+
 import java.util.Arrays;
 
-public class Cell {
-    public boolean visited; //訪問済みか
-    public boolean[] walls; //各方向の壁の有無
+public final class Cell {
+    private boolean visited;
+    private final boolean[] walls;
 
     public Cell(int dimensions) {
-        this.visited = false;
-        this.walls = new boolean[dimensions * 2];
-        Arrays.fill(this.walls, true);
-    }
-    
-    public void visit() { this.visited = true; }
-
-    public boolean hasWall(Direction dir) {
-        return walls[dir.ordinal()];
+        walls = new boolean[dimensions * 2];
+        Arrays.fill(walls, true);
     }
 
-    public void removeWall(Direction dir) {
-        walls[dir.ordinal()] = false;
-    }
+    public boolean isVisited() { return visited; }
+    public void visit() { visited = true; }
+    public boolean hasWall(Direction direction) { return walls[direction.ordinal()]; }
+
+    // 壁の変更は同じパッケージのMazeから行い、隣接セルとの対称性を守る。
+    void removeWall(Direction direction) { walls[direction.ordinal()] = false; }
 }

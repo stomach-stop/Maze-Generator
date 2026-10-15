@@ -1,23 +1,24 @@
 package game;
 
-public class Player {
-    public Position pos;
-    private Maze maze;
-    
-    public Player(Maze maze) {
-        pos = new Position(
-            GameSetting.START_POSITION
-        );
+/** プレイヤーの位置と移動規則。画面設定に依存しない。 */
+public final class Player {
+    private final Maze maze;
+    private final Position startPosition;
+    private Position position;
+
+    public Player(Maze maze, Position startPosition) {
+        if (!maze.isInBounds(startPosition)) throw new IllegalArgumentException("Invalid start position.");
         this.maze = maze;
+        this.startPosition = startPosition;
+        position = startPosition;
     }
 
-    public void move(Direction dir) {
-        Position next = pos.cloneMoved(dir);
-        if (
-            maze.isInBounds(next) &&
-            !maze.cells[maze.toIndex(pos)].hasWall(dir)
-        ) {
-            pos = next;
-        }
+    public Position position() { return position; }
+    public void resetPosition() { position = startPosition; }
+
+    public void move(Direction direction) {
+        if (direction.ordinal() >= maze.getDirectionCount()) return;
+        Position next = position.cloneMoved(direction);
+        if (maze.isInBounds(next) && !maze.cellAt(position).hasWall(direction)) position = next;
     }
 }

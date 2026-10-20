@@ -1,0 +1,8 @@
+package view.renderer;
+
+import model.Maze;
+import model.Player;
+
+public final class YZRender extends SliceRender {
+    public YZRender(Maze maze, Player player) { super(maze, player, SlicePlane.YZ); }
+}

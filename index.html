@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>三次元迷路の可視化</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #edf2f6; color: #213043; font-family: sans-serif; }
+    header, footer { max-width: 1200px; margin: auto; padding: 16px 24px; }
+    h1 { margin: 0 0 8px; font-size: 24px; }
+    p { line-height: 1.6; margin: 6px 0; }
+    #status { padding: 10px 14px; border-radius: 6px; background: white; }
+    .viewport { overflow: auto; margin: 0 16px; }
+    #display { width: 100%; min-width: 900px; height: 900px; background: #fff; }
+    a { color: #175da8; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>三次元迷路の可視化</h1>
+    <p>PCのキーボードとマウスで操作してください。</p>
+    <p>移動：W・A・S・D ／ 高さ：Q・E ／ 表示：1〜4<br>
+       左側のボタン：位置初期化・赤線の切り替え ／ 3D：ドラッグで回転、ホイールで拡大縮小</p>
+    <p id="status" role="status" aria-live="polite">起動準備中です。</p>
+  </header>
+  <main class="viewport"><div id="display" aria-label="迷路アプリの表示領域"></div></main>
+  <footer><p>Java実行環境：<a href="https://cheerpj.com/">CheerpJ</a> by Leaning Technologies</p>
+    <p>画面を閉じた場合や再起動したい場合は、ページを再読み込みしてください。</p></footer>
+  <script src="app.js"></script>
+</body>
+</html>
